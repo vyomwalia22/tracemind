@@ -26,6 +26,19 @@ body {
   background-size: 32px 32px;
 }
 
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+}
+
 ::selection {
   background: var(--coral);
   color: var(--ink);
@@ -42,4 +55,14 @@ body {
 
 .animate-rise-delayed {
   animation: rise 600ms 120ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
