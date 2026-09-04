@@ -2,18 +2,41 @@
 
 import { useState } from "react";
 
+import {
+  isValidEvmWalletAddress,
+  isValidInvestigationQuestion,
+} from "@/utils/investigation-validation";
+
 const examplePrompts = [
   "Investigate this wallet and tell me if anything unusual happened recently.",
   "Which addresses has this wallet interacted with most often?",
   "Look for sudden changes in this wallet's activity or assets.",
 ];
 
-const walletPattern = /^[a-fA-F0-9]{40}$/;
-
 export default function Home() {
   const [wallet, setWallet] = useState("");
   const [question, setQuestion] = useState("");
-  const isReady = walletPattern.test(wallet.trim()) && question.trim().length > 0;
+  const [requestState, setRequestState] = useState<"idle" | "validating" | "invalid" | "unavailable">("idle");
+  const isReady = isValidEvmWalletAddress(`0x${wallet.trim()}`) && isValidInvestigationQuestion(question);
+
+  async function submitInvestigation() {
+    setRequestState("validating");
+
+    try {
+      const response = await fetch("/api/investigations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletAddress: `0x${wallet.trim()}`,
+          question: question.trim(),
+        }),
+      });
+
+      setRequestState(response.status === 400 ? "invalid" : "unavailable");
+    } catch {
+      setRequestState("unavailable");
+    }
+  }
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-7xl flex-1 flex-col px-5 py-5 sm:px-8 sm:py-7 lg:px-12">
@@ -41,7 +64,7 @@ export default function Home() {
           </div>
         </div>
 
-        <form className="animate-rise-delayed border border-ink/15 bg-white/75 p-5 shadow-[6px_6px_0_var(--color-coral)] sm:p-8 lg:max-w-2xl lg:justify-self-end" onSubmit={(event) => event.preventDefault()}>
+        <form className="animate-rise-delayed border border-ink/15 bg-white/75 p-5 shadow-[6px_6px_0_var(--color-coral)] sm:p-8 lg:max-w-2xl lg:justify-self-end" onSubmit={(event) => { event.preventDefault(); void submitInvestigation(); }}>
           <div className="mb-7 flex items-start justify-between gap-4 sm:mb-8">
             <div>
               <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-coral">New inquiry</p>
@@ -84,11 +107,14 @@ export default function Home() {
             </div>
           </div>
 
-          <button type="submit" disabled={!isReady} aria-disabled={!isReady} className="mt-6 flex h-12 w-full items-center justify-center gap-3 bg-ink px-5 text-sm font-semibold text-paper transition-colors hover:bg-coral hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-ink/15 disabled:text-ink/40 disabled:hover:bg-ink/15 disabled:hover:text-ink/40">
-            {isReady ? "Investigation ready" : "Enter a wallet and question"}
+          {requestState === "invalid" && <p role="alert" className="mt-5 border-l-2 border-coral bg-coral/10 px-3 py-2 text-xs leading-5 text-ink">Check the wallet address and question, then try again.</p>}
+          {requestState === "unavailable" && <p role="status" className="mt-5 border-l-2 border-ink/30 bg-ink/5 px-3 py-2 text-xs leading-5 text-ink">Request validated. The investigation pipeline is not connected yet.</p>}
+
+          <button type="submit" disabled={!isReady || requestState === "validating"} aria-disabled={!isReady || requestState === "validating"} className="mt-6 flex h-12 w-full items-center justify-center gap-3 bg-ink px-5 text-sm font-semibold text-paper transition-colors hover:bg-coral hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-ink/15 disabled:text-ink/40 disabled:hover:bg-ink/15 disabled:hover:text-ink/40">
+            {requestState === "validating" ? "Validating request..." : isReady ? "Send investigation request" : "Enter a wallet and question"}
             <span aria-hidden="true">-&gt;</span>
           </button>
-          <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-ink/35">Investigation engine available in the next milestone</p>
+          <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-ink/35">No investigation runs until the data and AI layers are connected</p>
         </form>
       </section>
 
