@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { getAaveWalletActivity } from "@/lib/graph/aave";
+import { GraphClientError } from "@/lib/graph/errors";
+import type { InvestigationRetrievalResponse } from "@/types/investigation-response";
 import { validateInvestigationRequest } from "@/utils/investigation-validation";
+
+const DEFAULT_AAVE_ACTIVITY_LIMIT = 25;
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -36,14 +41,50 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(
-    {
-      success: false,
-      error: {
-        code: "pipeline_unavailable",
-        message: "The investigation pipeline is not connected yet.",
+  try {
+    const aaveActivity = await getAaveWalletActivity(validation.data.walletAddress, DEFAULT_AAVE_ACTIVITY_LIMIT);
+    const response: InvestigationRetrievalResponse = {
+      success: true,
+      status: "data_retrieved",
+      walletAddress: validation.data.walletAddress,
+      question: validation.data.question,
+      dataSources: ["aave-v3-ethereum"],
+      aaveActivity,
+      recordCount: aaveActivity.length,
+    };
+
+    return NextResponse.json(response);
+  } catch (error) {
+    if (error instanceof GraphClientError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        },
+        { status: getGraphErrorStatus(error) },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "aave_data_source_error",
+          message: "Aave activity could not be retrieved.",
+        },
       },
-    },
-    { status: 501 },
-  );
+      { status: 502 },
+    );
+  }
+}
+
+function getGraphErrorStatus(error: GraphClientError): number {
+  if (error.code === "configuration_error") {
+    return 500;
+  }
+
+  return 502;
 }
