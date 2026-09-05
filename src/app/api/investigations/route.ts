@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { getAaveWalletActivity } from "@/lib/graph/aave";
 import { GraphClientError } from "@/lib/graph/errors";
+import { runInvestigation } from "@/lib/investigation/engine";
+import { createClaudeInvestigationProvider } from "@/lib/investigation/providers/claude-provider";
 import type { InvestigationRetrievalResponse } from "@/types/investigation-response";
 import { validateInvestigationRequest } from "@/utils/investigation-validation";
 
@@ -43,6 +45,14 @@ export async function POST(request: Request) {
 
   try {
     const aaveActivity = await getAaveWalletActivity(validation.data.walletAddress, DEFAULT_AAVE_ACTIVITY_LIMIT);
+
+    const investigation = await runInvestigation({
+      walletAddress: validation.data.walletAddress,
+      question: validation.data.question,
+      aaveActivity,
+      createProvider: createClaudeInvestigationProvider,
+    });
+
     const response: InvestigationRetrievalResponse = {
       success: true,
       status: "data_retrieved",
@@ -51,6 +61,7 @@ export async function POST(request: Request) {
       dataSources: ["aave-v3-ethereum"],
       aaveActivity,
       recordCount: aaveActivity.length,
+      investigation,
     };
 
     return NextResponse.json(response);
