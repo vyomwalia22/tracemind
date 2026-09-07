@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { sampleAaveActivity, sampleWalletAddress } from "@/lib/investigation/__fixtures__/aave-activity";
+import {
+  sampleAaveActivity,
+  sampleEvidenceWindow,
+  sampleLiquidationActivity,
+  sampleSupplyActivity,
+  sampleWalletAddress,
+} from "@/lib/investigation/__fixtures__/aave-activity";
 import { runInvestigation } from "@/lib/investigation/engine";
 import { InvestigationProviderError } from "@/lib/investigation/errors";
 import type { InvestigationProvider, InvestigationProviderResult } from "@/lib/investigation/provider";
@@ -28,6 +34,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: [],
+      evidenceWindow: { complete: true, recordCount: 0, oldestTimestamp: null, newestTimestamp: null, truncated: false },
       createProvider,
     });
 
@@ -40,6 +47,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerReturning({
         model: "claude-opus-5",
         output: {
@@ -69,11 +77,66 @@ describe("runInvestigation", () => {
     }
   });
 
+  it("passes deterministic computed aggregates, the evidence window, and stable evidence ids to the provider", async () => {
+    const generateInvestigationOutput = vi.fn().mockResolvedValue({
+      model: "claude-opus-5",
+      output: { summary: "The wallet supplied USDC and was later liquidated.", findings: [] },
+    });
+
+    await runInvestigation({
+      walletAddress: sampleWalletAddress,
+      question: QUESTION,
+      aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
+      createProvider: () => ({ generateInvestigationOutput }),
+    });
+
+    expect(generateInvestigationOutput).toHaveBeenCalledTimes(1);
+    const request = generateInvestigationOutput.mock.calls[0][0];
+
+    expect(request.evidence.map((item: { evidenceId: string }) => item.evidenceId)).toEqual([
+      sampleSupplyActivity.id,
+      sampleLiquidationActivity.id,
+    ]);
+    expect(request.computedAggregates.totalEventCount).toBe(sampleAaveActivity.length);
+    expect(request.computedAggregates.perAsset.USDC.totalSupply).toEqual({
+      raw: "120500000",
+      normalized: "120.5",
+      eventCount: 1,
+    });
+    expect(request.computedAggregates.perAsset.WETH.totalLiquidationCollateralSeized).toEqual({
+      raw: "20000000000000000",
+      normalized: "0.02",
+      eventCount: 1,
+    });
+    expect(request.evidenceWindow).toEqual(sampleEvidenceWindow);
+  });
+
+  it("passes a truncated evidence window through unchanged so the provider can disclose incompleteness", async () => {
+    const generateInvestigationOutput = vi.fn().mockResolvedValue({
+      model: "claude-opus-5",
+      output: { summary: "The wallet supplied USDC and was later liquidated.", findings: [] },
+    });
+    const truncatedWindow = { ...sampleEvidenceWindow, complete: false, truncated: true };
+
+    await runInvestigation({
+      walletAddress: sampleWalletAddress,
+      question: QUESTION,
+      aaveActivity: sampleAaveActivity,
+      evidenceWindow: truncatedWindow,
+      createProvider: () => ({ generateInvestigationOutput }),
+    });
+
+    const request = generateInvestigationOutput.mock.calls[0][0];
+    expect(request.evidenceWindow).toEqual(truncatedWindow);
+  });
+
   it("rejects malformed AI output that fails schema validation", async () => {
     const outcome = await runInvestigation({
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerReturning({
         model: "claude-opus-5",
         output: { summary: 42, findings: "not an array" },
@@ -91,6 +154,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerReturning({
         model: "claude-opus-5",
         output: {},
@@ -108,6 +172,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerReturning({
         model: "claude-opus-5",
         output: {
@@ -134,6 +199,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: () => {
         throw new InvestigationProviderError("configuration_error", "The AI investigation provider is not configured.");
       },
@@ -153,6 +219,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerThrowing(
         new InvestigationProviderError("rate_limited", "The AI provider is rate limiting requests."),
       ),
@@ -169,6 +236,7 @@ describe("runInvestigation", () => {
       walletAddress: sampleWalletAddress,
       question: QUESTION,
       aaveActivity: sampleAaveActivity,
+      evidenceWindow: sampleEvidenceWindow,
       createProvider: providerThrowing(new Error("boom")),
     });
 

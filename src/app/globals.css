@@ -1,29 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f0e8;
-  --foreground: #17221d;
-  --paper: #f4f0e8;
-  --ink: #17221d;
-  --coral: #e85d45;
+  /* Midnight navy foundation - three tonal steps, never pure black. */
+  --background: #07111c;
+  --surface: #0b1622;
+  --surface-2: #101d2a;
+
+  /* Warm ivory text, stepping down in emphasis. */
+  --foreground: #f4f0e8;
+  --muted: #aab3bc;
+  --muted-2: #65717d;
+
+  /* Champagne gold - the desk's signature accent. */
+  --gold: #d6b77a;
+  --gold-strong: #c8a96a;
+  --gold-dim: rgba(214, 183, 122, 0.14);
+
+  /* Restrained electric cyan - reserved for live/onchain data. */
+  --cyan: #5fd6e8;
+  --cyan-dim: rgba(95, 214, 232, 0.12);
+
+  --positive: #7ea88f;
+
+  /* Warm coral - anomaly / risk signal only. */
+  --negative: #e58b62;
+  --negative-dim: rgba(229, 139, 98, 0.12);
+
+  /* Hairline borders - ivory at low opacity, never grey. */
+  --border: rgba(244, 240, 232, 0.1);
+  --border-strong: rgba(244, 240, 232, 0.18);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-coral: var(--coral);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-gold: var(--gold);
+  --color-gold-strong: var(--gold-strong);
+  --color-gold-dim: var(--gold-dim);
+  --color-cyan: var(--cyan);
+  --color-cyan-dim: var(--cyan-dim);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-negative-dim: var(--negative-dim);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 1200px 700px at 85% -10%, rgba(95, 214, 232, 0.06), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 10% 20%, rgba(214, 183, 122, 0.05), transparent 55%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
-  background-image: linear-gradient(rgba(23, 34, 29, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(23, 34, 29, 0.045) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-attachment: fixed;
+  position: relative;
+}
+
+.font-display {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 44px 44px, 44px 44px, 120px 120px;
 }
 
 button,
@@ -34,18 +96,45 @@ textarea {
 
 button:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--coral);
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: var(--coral);
-  color: var(--ink);
+  background: var(--gold);
+  color: #12100a;
+}
+
+/* Evidence rows light up when a finding's evidence chip is followed to them. */
+.evidence-row {
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  margin-left: -0.75rem;
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+
+.evidence-row:target,
+.evidence-row[data-selected="true"] {
+  border-left-color: var(--cyan);
+  background: var(--cyan-dim);
+}
+
+/* Scroll-reveal: toggled by a tiny IntersectionObserver hook (see ScrollReveal.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 750ms ease, transform 750ms ease;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -57,12 +146,82 @@ textarea:focus-visible {
   animation: rise 600ms 120ms ease-out both;
 }
 
+@keyframes progress-sweep {
+  0% { transform: translateX(-110%); opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { transform: translateX(220%); opacity: 0.4; }
+}
+
+.animate-progress-sweep {
+  animation: progress-sweep 2.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.3s ease-in-out infinite;
+}
+
+@keyframes tape-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+.animate-tape-scroll {
+  animation: tape-scroll 18s linear infinite;
+}
+
+/* Hero network visualization (see NetworkVisualization.tsx). */
+@keyframes node-glow {
+  0%, 100% { opacity: 0.55; r: 4.5; }
+  50% { opacity: 1; r: 6; }
+}
+
+.animate-node-glow {
+  animation: node-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes line-pulse {
+  0% { stroke-dashoffset: 24; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+.animate-line-pulse {
+  stroke-dasharray: 6 18;
+  animation: line-pulse 3s linear infinite;
+}
+
+@keyframes drift {
+  0% { transform: translateY(0) scale(1); opacity: 0.4; }
+  50% { opacity: 0.9; }
+  100% { transform: translateY(-14px) scale(1.15); opacity: 0; }
+}
+
+.animate-drift {
+  animation: drift 4s ease-in infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

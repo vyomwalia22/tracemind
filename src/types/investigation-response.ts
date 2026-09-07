@@ -1,4 +1,4 @@
-import type { AaveProtocolActivity } from "@/lib/graph/aave-types";
+import type { AaveEvidenceWindow, AaveProtocolActivity } from "@/lib/graph/aave-types";
 import type { InvestigationQuestion, WalletAddress } from "@/types/investigation";
 import type { InvestigationOutcome } from "@/types/investigation-report";
 
@@ -10,5 +10,6 @@ export interface InvestigationRetrievalResponse {
   dataSources: readonly ["aave-v3-ethereum"];
   aaveActivity: AaveProtocolActivity[];
   recordCount: number;
+  evidenceWindow: AaveEvidenceWindow;
   investigation: InvestigationOutcome;
 }

@@ -1,4 +1,5 @@
-import type { AaveProtocolActivity } from "@/lib/graph/aave-types";
+import type { AaveEvidenceWindow, AaveProtocolActivity } from "@/lib/graph/aave-types";
+import { computeAaveActivityAggregates } from "@/lib/investigation/aggregates";
 import { buildAaveInvestigationEvidence } from "@/lib/investigation/evidence";
 import { InvestigationProviderError } from "@/lib/investigation/errors";
 import type { InvestigationProvider } from "@/lib/investigation/provider";
@@ -11,6 +12,7 @@ export interface RunInvestigationParams {
   walletAddress: WalletAddress;
   question: InvestigationQuestion;
   aaveActivity: readonly AaveProtocolActivity[];
+  evidenceWindow: AaveEvidenceWindow;
   createProvider: () => InvestigationProvider;
 }
 
@@ -36,6 +38,8 @@ export async function runInvestigation(params: RunInvestigationParams): Promise<
     return { status: "failed", error: toReportError(error) };
   }
 
+  const computedAggregates = computeAaveActivityAggregates(params.aaveActivity);
+
   let providerResult;
 
   try {
@@ -43,6 +47,8 @@ export async function runInvestigation(params: RunInvestigationParams): Promise<
       walletAddress: params.walletAddress,
       question: params.question,
       evidence,
+      computedAggregates,
+      evidenceWindow: params.evidenceWindow,
     });
   } catch (error) {
     return { status: "failed", error: toReportError(error) };

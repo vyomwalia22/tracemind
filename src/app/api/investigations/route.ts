@@ -7,7 +7,12 @@ import { createClaudeInvestigationProvider } from "@/lib/investigation/providers
 import type { InvestigationRetrievalResponse } from "@/types/investigation-response";
 import { validateInvestigationRequest } from "@/utils/investigation-validation";
 
-const DEFAULT_AAVE_ACTIVITY_LIMIT = 25;
+// AI investigation calls can take up to ~90s (see InvestigationLoading's own
+// elapsed-time copy). Vercel's platform default is well under that, so this
+// route needs an explicit ceiling or production requests would time out
+// where local `next dev`/`next start` never would. Confirm this fits the
+// deployment's Vercel plan - see deployment report for plan-specific caps.
+export const maxDuration = 90;
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -44,12 +49,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const aaveActivity = await getAaveWalletActivity(validation.data.walletAddress, DEFAULT_AAVE_ACTIVITY_LIMIT);
+    const { activity: aaveActivity, evidenceWindow } = await getAaveWalletActivity(validation.data.walletAddress);
 
     const investigation = await runInvestigation({
       walletAddress: validation.data.walletAddress,
       question: validation.data.question,
       aaveActivity,
+      evidenceWindow,
       createProvider: createClaudeInvestigationProvider,
     });
 
@@ -61,6 +67,7 @@ export async function POST(request: Request) {
       dataSources: ["aave-v3-ethereum"],
       aaveActivity,
       recordCount: aaveActivity.length,
+      evidenceWindow,
       investigation,
     };
 

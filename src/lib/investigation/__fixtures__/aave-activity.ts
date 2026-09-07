@@ -1,4 +1,4 @@
-import type { AaveProtocolActivity } from "@/lib/graph/aave-types";
+import type { AaveEvidenceWindow, AaveProtocolActivity } from "@/lib/graph/aave-types";
 import type { WalletAddress } from "@/types/investigation";
 
 const WALLET_ADDRESS = "0x1111111111111111111111111111111111111111" as WalletAddress;
@@ -13,8 +13,10 @@ export const sampleSupplyActivity: AaveProtocolActivity = {
   action: "Supply",
   walletAddress: WALLET_ADDRESS,
   activityType: "standard",
-  amount: "120.5",
+  amount: "120500000",
+  amountNormalized: "120.5",
   reserveSymbol: "USDC",
+  reserveDecimals: 6,
 };
 
 export const sampleLiquidationActivity: AaveProtocolActivity = {
@@ -25,10 +27,22 @@ export const sampleLiquidationActivity: AaveProtocolActivity = {
   action: "LiquidationCall",
   walletAddress: WALLET_ADDRESS,
   activityType: "liquidation",
-  collateralAmount: "0.02",
-  principalAmount: "50",
+  collateralAmount: "20000000000000000",
+  collateralAmountNormalized: "0.02",
   collateralReserveSymbol: "WETH",
+  collateralReserveDecimals: 18,
+  principalAmount: "50000000",
+  principalAmountNormalized: "50",
   principalReserveSymbol: "USDC",
+  principalReserveDecimals: 6,
 };
 
 export const sampleAaveActivity: AaveProtocolActivity[] = [sampleSupplyActivity, sampleLiquidationActivity];
+
+export const sampleEvidenceWindow: AaveEvidenceWindow = {
+  complete: true,
+  recordCount: sampleAaveActivity.length,
+  oldestTimestamp: sampleSupplyActivity.timestamp,
+  newestTimestamp: sampleLiquidationActivity.timestamp,
+  truncated: false,
+};

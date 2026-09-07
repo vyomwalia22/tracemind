@@ -1,3 +1,5 @@
+import type { AaveEvidenceWindow } from "@/lib/graph/aave-types";
+import type { AaveActivityAggregates } from "@/lib/investigation/aggregates";
 import type { InvestigationQuestion, WalletAddress } from "@/types/investigation";
 import type { InvestigationEvidenceItem } from "@/types/investigation-report";
 
@@ -5,6 +7,10 @@ export interface InvestigationProviderRequest {
   walletAddress: WalletAddress;
   question: InvestigationQuestion;
   evidence: InvestigationEvidenceItem[];
+  /** Deterministic, code-computed totals - ground truth for arithmetic, never derived by the AI. */
+  computedAggregates: AaveActivityAggregates;
+  /** Whether the retrieved evidence is the wallet's complete history or a bounded/truncated window. */
+  evidenceWindow: AaveEvidenceWindow;
 }
 
 export interface InvestigationProviderResult {

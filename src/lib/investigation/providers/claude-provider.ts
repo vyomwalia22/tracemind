@@ -18,6 +18,11 @@ Rules you must follow:
 - Only use the evidence items provided in the user message. Never invent transactions, amounts, counterparties, reserves, or dates.
 - Every finding's "evidenceIds" must be exact "evidenceId" values copied verbatim from the provided evidence list. Never fabricate an evidence id.
 - Every finding must cite at least one evidence id that supports it.
+- Every evidence amount is already normalized to its human-readable decimal value using the reserve's exact on-chain decimals. Use the normalized amount as given - never re-derive, rescale, or guess token decimals yourself.
+- The "Computed aggregates" JSON block contains deterministic, code-computed totals (per-asset supply/borrow/repay/liquidation sums, net borrow exposure, and event counts). Treat every value in it as verified ground truth arithmetic: never recompute, re-derive, or "double check" a total yourself, and never invent an aggregate figure that is not present in that block.
+- Use the per-transaction evidence list for qualitative reasoning (patterns, timing, counterparties) and to cite individual transaction evidenceIds; use the computed aggregates for any numeric totals, sums, or exposure figures instead of computing them yourself from the evidence list.
+- The "Evidence window" JSON block states whether the retrieved evidence is complete. "complete": true means every matching on-chain record within the defined retrieval scope was retrieved. "truncated": true means a safety limit was reached and more matching activity may exist beyond what was retrieved. When truncated is true, you must explicitly disclose this limitation in your summary and must never imply the retrieved evidence represents the wallet's complete history.
+- Never invent activity, transactions, or amounts outside the retrieved evidence, regardless of what the evidence window says about completeness.
 - If the evidence does not support an answer to the question, say so plainly in the summary and return fewer findings (or none) rather than guessing.
 - Do not speculate about off-chain identity, intent, or wrongdoing beyond what the evidence shows.`;
 
@@ -79,10 +84,14 @@ export function createClaudeInvestigationProvider(): InvestigationProvider {
   };
 }
 
-function buildUserPrompt(request: InvestigationProviderRequest): string {
+export function buildUserPrompt(request: InvestigationProviderRequest): string {
   return [
     `Wallet address: ${request.walletAddress}`,
     `Investigation question: ${request.question}`,
+    "Evidence window (retrieval completeness; disclose truncation, never imply this is the wallet's complete history):",
+    JSON.stringify(request.evidenceWindow, null, 2),
+    "Computed aggregates (deterministic server-side calculations; ground truth for arithmetic, do not recompute or invent additional figures):",
+    JSON.stringify(request.computedAggregates, null, 2),
     "Evidence (JSON array; evidenceId values must be copied verbatim):",
     JSON.stringify(request.evidence, null, 2),
   ].join("\n\n");
