@@ -140,11 +140,11 @@ export default function Home() {
             <div className="mt-8 grid gap-14 lg:grid-cols-[1.15fr_1fr] lg:items-end lg:gap-10">
               <div>
                 <h1 className="animate-rise-delayed font-display text-6xl leading-[0.95] tracking-tight text-foreground sm:text-7xl md:text-[5.4rem]">
-                  Follow the
+                  Ask about a
                   <br />
                   wallet.
                   <br />
-                  <span className="text-gold italic">Find the evidence.</span>
+                  <span className="text-gold italic">Trace the evidence.</span>
                 </h1>
 
                 <p className="animate-rise-delayed mt-8 max-w-md text-[15px] leading-7 text-muted">
