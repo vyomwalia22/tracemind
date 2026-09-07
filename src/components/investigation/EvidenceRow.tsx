@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-import { evidenceLabel, formatClock, formatTimestamp } from "@/components/investigation/format";
+import {
+  evidenceLabel,
+  formatClock,
+  formatLedgerAmount,
+  formatTimestamp,
+  type FindingSignalTone,
+} from "@/components/investigation/format";
 import { CopyableHash } from "@/components/investigation/primitives";
 import type { AaveProtocolActivity } from "@/lib/graph/aave-types";
 
@@ -10,23 +16,32 @@ export function EvidenceRow({
   activity,
   index,
   citingFindingIndexes,
+  tone,
 }: {
   activity: AaveProtocolActivity;
   index: number;
   citingFindingIndexes: number[];
+  tone?: FindingSignalTone;
 }) {
   const [expanded, setExpanded] = useState(false);
   const label = evidenceLabel(index);
+  const isSignal = citingFindingIndexes.length > 0;
+  const dataTone = isSignal ? (tone === "anomaly" ? "anomaly" : tone === "normal" ? "normal" : "signal") : undefined;
 
   const asset =
     activity.activityType === "liquidation"
       ? `${activity.collateralReserveSymbol}/${activity.principalReserveSymbol}`
       : (activity.reserveSymbol ?? "—");
 
-  const amount =
+  const { display: amountDisplay, exact: amountExact } =
     activity.activityType === "liquidation"
-      ? `${activity.collateralAmountNormalized} / ${activity.principalAmountNormalized}`
-      : (activity.amountNormalized ?? "unavailable");
+      ? combineAmounts(
+          formatLedgerAmount(activity.collateralAmountNormalized),
+          formatLedgerAmount(activity.principalAmountNormalized),
+        )
+      : (activity.amountNormalized !== undefined
+          ? formatLedgerAmount(activity.amountNormalized)
+          : { display: "unavailable", exact: "unavailable" });
 
   function toggle() {
     setExpanded((value) => !value);
@@ -38,8 +53,9 @@ export function EvidenceRow({
       role="button"
       tabIndex={0}
       aria-expanded={expanded}
-      aria-label={`Evidence ${label}, ${expanded ? "collapse" : "expand"} details`}
+      aria-label={`Evidence ${label}, ${expanded ? "collapse" : "expand"} details${isSignal ? ", cited by a finding" : ""}`}
       data-selected={expanded ? "true" : undefined}
+      data-tone={dataTone}
       onClick={toggle}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -56,8 +72,8 @@ export function EvidenceRow({
         </span>
         <span className="font-mono text-xs uppercase tracking-[0.06em] text-foreground/80">{activity.action}</span>
         <span className="font-mono text-xs text-muted">{asset}</span>
-        <span className="font-mono text-sm text-foreground" title={`${amount} ${asset}`}>
-          {amount}
+        <span className="font-mono text-sm tabular-nums text-foreground" title={`${amountExact} ${asset} (exact)`}>
+          {amountDisplay}
         </span>
         <span onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
           <CopyableHash value={activity.transactionHash} />
@@ -66,12 +82,18 @@ export function EvidenceRow({
 
       {expanded && (
         <div
-          className="mt-3 grid gap-4 border-t border-border pt-3 sm:grid-cols-2"
+          className="mt-3 grid gap-4 border-t border-border pt-3 sm:grid-cols-3"
           onClick={(event) => event.stopPropagation()}
         >
           <div>
             <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Timestamp</p>
             <p className="mt-1 font-mono text-xs text-foreground/80">{formatTimestamp(activity.timestamp)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Amount (exact)</p>
+            <p className="mt-1 font-mono text-xs text-foreground/80">
+              {amountExact} {asset}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Cited by</p>
@@ -85,4 +107,14 @@ export function EvidenceRow({
       )}
     </div>
   );
+}
+
+function combineAmounts(
+  collateral: { display: string; exact: string },
+  principal: { display: string; exact: string },
+): { display: string; exact: string } {
+  return {
+    display: `${collateral.display} / ${principal.display}`,
+    exact: `${collateral.exact} / ${principal.exact}`,
+  };
 }

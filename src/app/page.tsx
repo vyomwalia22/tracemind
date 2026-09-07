@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AboutData } from "@/components/investigation/AboutData";
 import { CasesNotice } from "@/components/investigation/CasesNotice";
@@ -38,6 +38,27 @@ export default function Home() {
   const [submittedWallet, setSubmittedWallet] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const isReady = isValidEvmWalletAddress(`0x${wallet.trim()}`) && isValidInvestigationQuestion(question);
+  const statusSectionRef = useRef<HTMLElement>(null);
+
+  // Runs only when requestState actually transitions (never on incidental
+  // rerenders) - carries the user straight to the status/loading area the
+  // moment a submission starts, so there's no ambiguity about whether
+  // "Begin investigation" did anything.
+  useEffect(() => {
+    if (requestState !== "loading") {
+      return;
+    }
+
+    const node = statusSectionRef.current;
+
+    // scrollIntoView isn't implemented in every environment (e.g. jsdom in
+    // tests) - guard it so focusing the status region never throws there.
+    if (typeof node?.scrollIntoView === "function") {
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    node?.focus({ preventScroll: true });
+  }, [requestState]);
 
   async function runInvestigation(walletAddress: string, trimmedQuestion: string) {
     setSubmittedWallet(walletAddress);
@@ -191,7 +212,12 @@ export default function Home() {
         />
 
         {(requestState === "loading" || requestState === "error" || requestState === "success") && (
-          <section className="py-16">
+          <section
+            ref={statusSectionRef}
+            tabIndex={-1}
+            aria-label="Investigation status"
+            className="py-16 focus:outline-none"
+          >
             <div className="mx-auto max-w-6xl px-5 sm:px-8">
               {requestState === "loading" && (
                 <InvestigationLoading walletAddress={submittedWallet} question={submittedQuestion} />

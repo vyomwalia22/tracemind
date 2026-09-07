@@ -44,7 +44,7 @@ export function IntakeDesk({
           <label className="block text-xs uppercase tracking-[0.12em] text-muted-2" htmlFor="wallet">
             Wallet
           </label>
-          <div className="mt-3 flex items-baseline gap-2 border-b border-border-strong pb-3 transition-colors focus-within:border-gold">
+          <div className="mt-3 flex items-baseline gap-2 rounded-sm border border-border-strong bg-background/40 px-4 py-3 transition-colors hover:border-gold/40 focus-within:border-gold focus-within:bg-background/60">
             <span className="font-mono text-2xl text-muted-2 sm:text-3xl" aria-hidden="true">
               0x
             </span>
@@ -78,7 +78,7 @@ export function IntakeDesk({
             placeholder="What looks unusual about this wallet?"
             aria-describedby="question-help"
             rows={2}
-            className="mt-3 w-full resize-none border-b border-border-strong bg-transparent pb-3 text-xl leading-8 text-foreground outline-none transition-colors placeholder:text-muted-2 focus:border-gold sm:text-2xl"
+            className="mt-3 w-full resize-none rounded-sm border border-border-strong bg-background/40 px-4 py-3 text-xl leading-8 text-foreground outline-none transition-colors placeholder:text-muted-2 hover:border-gold/40 focus:border-gold focus:bg-background/60 sm:text-2xl"
           />
           <p id="question-help" className="mt-2 text-xs leading-5 text-muted-2">
             Ask about patterns, counterparties, timing, or anything that needs a closer look.

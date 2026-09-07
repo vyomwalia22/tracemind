@@ -4,6 +4,7 @@ import { AggregateTable } from "@/components/investigation/AggregateTable";
 import { AssessmentSummary } from "@/components/investigation/AssessmentSummary";
 import { EvidenceLedger } from "@/components/investigation/EvidenceLedger";
 import { EvidenceWarning } from "@/components/investigation/EvidenceWarning";
+import { classifyFindingSignal, type FindingSignalTone } from "@/components/investigation/format";
 import { FindingEntry } from "@/components/investigation/FindingEntry";
 import { InvestigationHeader } from "@/components/investigation/InvestigationHeader";
 import { InvestigationOverview } from "@/components/investigation/InvestigationOverview";
@@ -50,6 +51,33 @@ export function InvestigationResult({ retrieval, onRetry, onReturnToDesk }: Inve
     });
     return map;
   }, [findings]);
+
+  // Presentational only: reads each finding's own statement text for
+  // language it already uses (see classifyFindingSignal) so matching
+  // findings/evidence can be visually distinguished - never a new AI field.
+  const findingTones = useMemo(
+    () => findings.map((finding) => classifyFindingSignal(finding.statement)),
+    [findings],
+  );
+
+  const evidenceToneById = useMemo(() => {
+    const map = new Map<string, FindingSignalTone>();
+    citingFindingsById.forEach((findingIndexes, evidenceId) => {
+      let tone: FindingSignalTone = "neutral";
+      for (const findingIndex of findingIndexes) {
+        const candidate = findingTones[findingIndex];
+        if (candidate === "anomaly") {
+          tone = "anomaly";
+          break;
+        }
+        if (candidate === "normal") {
+          tone = "normal";
+        }
+      }
+      map.set(evidenceId, tone);
+    });
+    return map;
+  }, [citingFindingsById, findingTones]);
 
   return (
     <div className="space-y-14 sm:space-y-16">
@@ -124,7 +152,13 @@ export function InvestigationResult({ retrieval, onRetry, onReturnToDesk }: Inve
             ) : (
               <div className="mt-6 divide-y divide-border">
                 {findings.map((finding, index) => (
-                  <FindingEntry key={index} index={index} finding={finding} evidenceIndexById={evidenceIndexById} />
+                  <FindingEntry
+                    key={index}
+                    index={index}
+                    finding={finding}
+                    evidenceIndexById={evidenceIndexById}
+                    tone={findingTones[index]}
+                  />
                 ))}
               </div>
             )}
@@ -137,7 +171,11 @@ export function InvestigationResult({ retrieval, onRetry, onReturnToDesk }: Inve
       )}
 
       <Panel>
-        <EvidenceLedger activity={retrieval.aaveActivity} citingFindingsById={citingFindingsById} />
+        <EvidenceLedger
+          activity={retrieval.aaveActivity}
+          citingFindingsById={citingFindingsById}
+          evidenceToneById={evidenceToneById}
+        />
       </Panel>
     </div>
   );

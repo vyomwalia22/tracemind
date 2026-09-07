@@ -115,6 +115,19 @@ a:focus-visible {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 
+/* Signal indicator: which finding (if any) an evidence row is cited by - see EvidenceRow.tsx. */
+.evidence-row[data-tone="anomaly"] {
+  border-left-color: var(--negative);
+}
+
+.evidence-row[data-tone="normal"] {
+  border-left-color: var(--positive);
+}
+
+.evidence-row[data-tone="signal"] {
+  border-left-color: var(--cyan);
+}
+
 .evidence-row:target,
 .evidence-row[data-selected="true"] {
   border-left-color: var(--cyan);

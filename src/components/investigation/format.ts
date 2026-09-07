@@ -66,6 +66,70 @@ function trimSmallValue(value: number): string {
   return fixed.replace(/0+$/, "").replace(/\.$/, "");
 }
 
+export interface LedgerAmount {
+  /** Bounded to a readable precision for the evidence ledger - never abbreviated to K/M/B, since these are individual transaction amounts, not aggregate totals. */
+  display: string;
+  /** The full-precision normalized value this was derived from - never rounded, never modified. */
+  exact: string;
+}
+
+/**
+ * Formats an already-normalized (human-readable, exact-decimals) amount for
+ * display in the evidence ledger: thousands separators plus a sensible
+ * bounded precision, so a long decimal tail (e.g. "4998.912737606377311264"
+ * from exact on-chain base-unit division) doesn't overrun the row and
+ * collide with the transaction hash column. The exact value this was
+ * derived from is always returned unrounded as `exact` for inspection.
+ */
+export function formatLedgerAmount(normalized: string): LedgerAmount {
+  const value = Number(normalized);
+
+  if (!Number.isFinite(value)) {
+    return { display: normalized, exact: normalized };
+  }
+
+  const abs = Math.abs(value);
+  // Sub-cent amounts (e.g. satoshi-denominated WBTC) keep more digits so a
+  // genuinely non-zero amount never rounds away to "0".
+  const maximumFractionDigits = abs === 0 ? 0 : abs >= 1 ? 3 : abs >= 0.01 ? 4 : 8;
+
+  const display = value.toLocaleString(undefined, {
+    maximumFractionDigits,
+    minimumFractionDigits: 0,
+  });
+
+  return { display, exact: normalized };
+}
+
+export type FindingSignalTone = "anomaly" | "normal" | "neutral";
+
+// Presentational only - reads the AI's own finding statement for language it
+// already uses (the provider's system prompt asks it to flag anything
+// unusual). This never adds a new AI classification or field; it only
+// reflects wording the report text already contains, defaulting to neutral
+// whenever neither pattern is clearly present.
+const NEGATED_ANOMALY_LANGUAGE = /\b(?:no|not|nothing|without any)\b(?:\s+\w+){0,3}\s+\b(?:unusual|anomal\w*|suspicious|irregular|concerning)\b/i;
+const REASSURING_LANGUAGE = /\b(?:normal|ordinary|typical|routine|healthy|no red flags?)\b/i;
+const ANOMALY_LANGUAGE = /\b(?:unusual|anomal(?:y|ous|ies)|suspicious|irregular|inconsistent|unexpected|concerning|red flags?)\b/i;
+
+/**
+ * Classifies a finding's own statement text as flagging an anomaly, reading
+ * as reassuringly normal, or neither (neutral) - purely for presentational
+ * emphasis. Derived entirely from the AI's existing free-text output, not a
+ * new backend classification.
+ */
+export function classifyFindingSignal(statement: string): FindingSignalTone {
+  if (NEGATED_ANOMALY_LANGUAGE.test(statement) || REASSURING_LANGUAGE.test(statement)) {
+    return "normal";
+  }
+
+  if (ANOMALY_LANGUAGE.test(statement)) {
+    return "anomaly";
+  }
+
+  return "neutral";
+}
+
 /** Truncates a hash/address for display while the full value stays available via title/copy. */
 export function truncateMiddle(value: string, headLength = 6, tailLength = 4): string {
   if (value.length <= headLength + tailLength + 1) {
