@@ -49,10 +49,15 @@ export function FindingEntry({
           )}
           <ConfidenceReadout confidence={finding.confidence} />
         </div>
-        {explanation && <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{explanation}</p>}
+        {explanation && (
+          <div className="mt-4">
+            <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Why</p>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{explanation}</p>
+          </div>
+        )}
 
         <div className="mt-5">
-          <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Evidence</p>
+          <p className="text-xs uppercase tracking-[0.1em] text-muted-2">Evidence IDs</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {finding.evidenceIds.map((evidenceId) => {
               const evidenceIndex = evidenceIndexById.get(evidenceId);

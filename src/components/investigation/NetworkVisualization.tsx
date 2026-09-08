@@ -96,8 +96,8 @@ export function NetworkVisualization() {
         </text>
       </svg>
 
-      <p className="absolute bottom-0 right-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-2">
-        Illustrative
+      <p className="absolute inset-x-0 bottom-0 text-right font-mono text-[10px] uppercase tracking-[0.08em] text-muted-2">
+        Illustrative — live investigation begins below
       </p>
     </div>
   );

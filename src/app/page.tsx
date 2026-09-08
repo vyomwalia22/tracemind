@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AboutData } from "@/components/investigation/AboutData";
 import { CasesNotice } from "@/components/investigation/CasesNotice";
 import { DataTape } from "@/components/investigation/DataTape";
+import { DemoPreview } from "@/components/investigation/DemoPreview";
 import { FinalCta } from "@/components/investigation/FinalCta";
 import { IntakeDesk } from "@/components/investigation/IntakeDesk";
 import { InvestigationLoading } from "@/components/investigation/InvestigationLoading";
@@ -175,14 +176,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 02 - Live trace strip */}
+        {/* 02 - See it in action: a placeholder for the recorded demo walkthrough */}
+        <DemoPreview />
+
+        {/* 03 - Live trace strip */}
         <section className="border-y border-border bg-surface">
           <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
             <DataTape />
           </div>
         </section>
 
-        {/* 03 - The investigation: how a wallet becomes a trail */}
+        {/* 04 - The investigation: how a wallet becomes a trail */}
         <section className="py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <ScrollReveal>

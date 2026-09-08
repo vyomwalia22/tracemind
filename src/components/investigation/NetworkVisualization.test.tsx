@@ -11,7 +11,7 @@ describe("NetworkVisualization", () => {
     render(<NetworkVisualization />);
 
     expect(screen.getByRole("img")).toBeTruthy();
-    expect(screen.getByText("Illustrative")).toBeTruthy();
+    expect(screen.getByText("Illustrative — live investigation begins below")).toBeTruthy();
     expect(screen.getByText("Wallet")).toBeTruthy();
   });
 });

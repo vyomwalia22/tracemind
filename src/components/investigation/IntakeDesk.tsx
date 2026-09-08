@@ -32,6 +32,9 @@ export function IntakeDesk({
         <p className="font-display mt-4 max-w-lg text-4xl leading-tight text-foreground sm:text-5xl">
           Ready to trace<span className="text-gold">?</span>
         </p>
+        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-2">
+          MVP scope · Aave V3 activity on Ethereum
+        </p>
 
         <form
           className="mt-12 max-w-3xl"
