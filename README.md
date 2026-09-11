@@ -10,6 +10,12 @@ The current MVP focuses on **Aave V3 on Ethereum**. TraceMind retrieves structur
 
 **Production:** https://tracemind-nine.vercel.app/
 
+## Demo
+
+Watch the TraceMind demo to see a real wallet investigation using live Aave V3 Ethereum data from The Graph and Claude.
+
+[Watch the demo video on YouTube](https://youtu.be/zRurqZdTyPs)
+
 ## Why TraceMind
 
 Blockchain data is public, but understanding what actually happened is still difficult.
