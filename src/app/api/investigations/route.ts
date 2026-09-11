@@ -7,12 +7,12 @@ import { createClaudeInvestigationProvider } from "@/lib/investigation/providers
 import type { InvestigationRetrievalResponse } from "@/types/investigation-response";
 import { validateInvestigationRequest } from "@/utils/investigation-validation";
 
-// AI investigation calls can take up to ~90s (see InvestigationLoading's own
-// elapsed-time copy). Vercel's platform default is well under that, so this
+// AI investigation calls can take up to ~99s locally (see InvestigationLoading's
+// own elapsed-time copy). Vercel's platform default is well under that, so this
 // route needs an explicit ceiling or production requests would time out
-// where local `next dev`/`next start` never would. Confirm this fits the
-// deployment's Vercel plan - see deployment report for plan-specific caps.
-export const maxDuration = 90;
+// where local `next dev`/`next start` never would. 180s gives margin over the
+// measured local baseline and fits within the Hobby + Fluid Compute ceiling (300s).
+export const maxDuration = 180;
 
 export async function POST(request: Request) {
   let body: unknown;
