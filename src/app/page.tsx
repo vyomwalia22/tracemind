@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { AboutData } from "@/components/investigation/AboutData";
 import { CasesNotice } from "@/components/investigation/CasesNotice";
 import { DataTape } from "@/components/investigation/DataTape";
-import { DemoPreview } from "@/components/investigation/DemoPreview";
 import { FinalCta } from "@/components/investigation/FinalCta";
 import { IntakeDesk } from "@/components/investigation/IntakeDesk";
 import { InvestigationLoading } from "@/components/investigation/InvestigationLoading";
@@ -175,9 +174,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* 02 - See it in action: a placeholder for the recorded demo walkthrough */}
-        <DemoPreview />
 
         {/* 03 - Live trace strip */}
         <section className="border-y border-border bg-surface">
