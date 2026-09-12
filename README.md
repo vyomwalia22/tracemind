@@ -14,7 +14,7 @@ The current MVP focuses on **Aave V3 on Ethereum**. TraceMind retrieves structur
 
 Watch the TraceMind demo to see a real wallet investigation using live Aave V3 Ethereum data from The Graph and Claude.
 
-[Watch the demo video on YouTube](https://youtu.be/zRurqZdTyPs)
+[Watch the demo video on YouTube](https://youtu.be/yfeKxBy8tdA)
 
 ## Why TraceMind
 
